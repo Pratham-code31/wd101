@@ -29,9 +29,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
   function validatePassword(password) {
     if (password.value.length < 8) {
-      password.setCustomValidity(
-        "Password must be at least 8 characters long."
-      );
+      password.setCustomValidity("Password must be at least 8 characters long.");
     } else {
       password.setCustomValidity("");
     }
