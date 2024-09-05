@@ -1,87 +1,85 @@
-document.addEventListener("DOMContentLoaded", function () {
-  let today = new Date();
+const form = document.getElementById("registrationForm");
+const dobInput = document.getElementById("dob");
+const dobError = document.getElementById("dobError");
+const savedDataTable = document.getElementById("savedDataTable");
+const savedDataBody = document.getElementById("savedDataBody");
 
-  // Calculate the maximum date (18 years ago from today)
-  let maxDate = new Date(
-    today.getFullYear() - 18,
-    today.getMonth(),
-    today.getDate()
-  );
+// Function to calculate age based on date of birth
+function calculateAge(dob) {
+  const today = new Date();
+  const birthDate = new Date(dob);
+  let age = today.getFullYear() - birthDate.getFullYear();
+  const monthDiff = today.getMonth() - birthDate.getMonth();
+  if (
+    monthDiff < 0 ||
+    (monthDiff === 0 && today.getDate() < birthDate.getDate())
+  ) {
+    age--;
+  }
+  return age;
+}
 
-  // Calculate the minimum date (55 years ago from today)
-  let minDate = new Date(
-    today.getFullYear() - 55,
-    today.getMonth(),
-    today.getDate()
-  );
+// Function to validate date of birth for age range between 18 and 55
+function validateDob() {
+  const dobValue = dobInput.value;
+  const age = calculateAge(dobValue);
+  if (age < 18 || age > 55) {
+    dobError.textContent = "Age must be between 18 and 55.";
+    return false;
+  } else {
+    dobError.textContent = "";
+    return true;
+  }
+}
 
-  // Format the dates to YYYY-MM-DD
-  let maxDateString = maxDate.toISOString().slice(0, 10);
-  let minDateString = minDate.toISOString().slice(0, 10);
+// Function to display data in a table format
+function displayData(name, email, password, dob, termsAccepted) {
+  const newRow = document.createElement("tr");
+  newRow.innerHTML = `
+        <td>${name}</td>
+        <td>${email}</td>
+        <td>${password}</td>
+        <td>${dob}</td>
+        <td>${termsAccepted}</td>
+    `;
+  savedDataBody.appendChild(newRow);
+  savedDataTable.style.display = "table";
+}
 
-  // Set the min and max attributes on the input field
-  document.getElementById("dob").setAttribute("min", minDateString);
-  document.getElementById("dob").setAttribute("max", maxDateString);
+// Form submission event
+form.addEventListener("submit", function (e) {
+  e.preventDefault();
+  if (validateDob()) {
+    const name = document.getElementById("name").value;
+    const email = document.getElementById("email").value;
+    const password = document.getElementById("password").value;
+    const dob = dobInput.value;
+    const termsAccepted = document.getElementById("terms").checked;
+
+    // Save data to localStorage
+    localStorage.setItem("name", name);
+    localStorage.setItem("email", email);
+    localStorage.setItem("dob", dob);
+    localStorage.setItem("termsAccepted", termsAccepted ? "True" : "False");
+
+    // Display the data in the table format
+    displayData(name, email, password, dob, termsAccepted ? "True" : "False");
+
+    alert("Registration Successful!");
+  }
 });
 
-let user_form = document.getElementById("user_form");
+// Load saved data from localStorage when the page loads
+window.onload = function () {
+  const savedName = localStorage.getItem("name");
+  const savedEmail = localStorage.getItem("email");
+  const savedDob = localStorage.getItem("dob");
+  const savedTerms = localStorage.getItem("termsAccepted");
 
-const retriveEntry = () => {
-  let entries = localStorage.getItem("user-entries");
-  if (entries) {
-    entries = JSON.parse(entries);
-  } else {
-    entries = [];
+  if (savedName && savedEmail && savedDob && savedTerms) {
+    displayData(savedName, savedEmail, "*****", savedDob, savedTerms);
   }
-  return entries;
 };
 
-let userEntries = retriveEntry();
-
-const displayEntry = () => {
-  const entries = retriveEntry();
-  const tableEntries = entries
-    .map((entry) => {
-      const nameCell = `<td class = 'border px-4 py-2'>${entry.name}</td>`;
-      const emailCell = `<td class = 'border px-4 py-2'>${entry.email}</td>`;
-      const passwordCell = `<td class = 'border px-4 py-2'>${entry.password}</td>`;
-      const dobCell = `<td class = 'border px-4 py-2'>${entry.dob}</td>`;
-      const acceptCell = `<td class = 'border px-4 py-2'>${entry.accept}</td>`;
-
-      const row = `<tr>${nameCell} ${emailCell} ${passwordCell} ${dobCell} ${acceptCell}`;
-      return row;
-    })
-    .join("\n");
-  const table = `<table class = "table-auto w-full"><tr>
-    <th class = "px-4 py-2">Name</th>
-    <th class = "px-4 py-2">Email</th>
-    <th class = "px-4 py-2">Password</th>
-    <th class = "px-4 py-2">Dob</th>
-    <th class = "px-4 py-2">Accepted terms?</th>
-    </tr>${tableEntries}</table>`;
-  let details = document.getElementById("user-entries");
-  details.innerHTML = table;
-};
-
-const saveUserform = (e) => {
-  const name = document.getElementById("name").value;
-  const email = document.getElementById("email").value;
-  const password = document.getElementById("password").value;
-  const dob = document.getElementById("dob").value;
-  const accept = document.getElementById("accept").checked;
-
-  const entry = {
-    name,
-    email,
-    password,
-    dob,
-    accept,
-  };
-
-  userEntries.push(entry);
-  localStorage.setItem("user-entries", JSON.stringify(userEntries));
-  displayEntry();
-};
-
-user_form.addEventListener("submit", saveUserform);
-displayEntry();
+// Add validation on the Date of Birth field when it changes
+dobInput.addEventListener("input", validateDob);
